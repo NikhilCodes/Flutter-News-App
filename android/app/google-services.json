@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "702264651363",
+    "firebase_url": "https://crunchy-bytes.firebaseio.com",
+    "project_id": "crunchy-bytes",
+    "storage_bucket": "crunchy-bytes.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:702264651363:android:1c1c1dac5f879488d2d256",
+        "android_client_info": {
+          "package_name": "com.nikhilcodes.newsblog"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "702264651363-6n3gnsft8vvftnhagqv9gdn7qj6oo6uv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDla3VHoCCC08sISq4lWTiSDbhnE-3elFE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "702264651363-6n3gnsft8vvftnhagqv9gdn7qj6oo6uv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
