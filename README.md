@@ -1,17 +1,26 @@
-# newsblog
-
-A new Flutter blog application using firebase.
-
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
 # College News/Blog Template
+A News/Blog template with sleek UI and Firebase as its backend.
+
+## Features
+ - Great UI/UX
+ - Caching of Images
+ - Firebase as Backend
+ - Fair bit of animations
+ 
+## Designing Firebase Database yourself?
+### Structure
+```
+news-articles <type: collection> {
+    hsd283y8hh823 <type: document> {
+        title: "Some Title 1",
+        sub-title: "Some Sub-title",  // Optional
+        image-url: "http(s)?://someurl"
+        body: "Lorem Ipsum Bla Bla Bla"
+        date: "dd MONTH yyyy",  // Example: 13 FEBRUARY 2020
+        time: "hh:mm AM/PM",
+        timestamp: yyyymmddhhmm,  
+        // Example: 202003171107 for 2020 year 03 month 17 day 
+        // and last four digit for time in 24 hour format.
+    }
+}
+```
