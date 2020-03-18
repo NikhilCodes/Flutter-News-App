@@ -201,12 +201,14 @@ class NewsTileLarge extends StatelessWidget {
   Widget build(BuildContext context) {
     String titleData, subTitleData, imageUrlData, dateData;
     titleData = data['title'];
-    if ((data['sub-title'] != null) && (data['sub-title'] != '')) {
+    if (data['sub-title'] != null && data['sub-title'] != '') {
       subTitleData = data['sub-title'];
     } else {
-      subTitleData = data['body']; // Overflow attribute will not
-      // allow full body to appear.
+      subTitleData = data['body'];
+      // Overflow attribute will not allow
+      // full body to appear in subtitle.
     }
+
     imageUrlData = data['image-url'];
     dateData = data['date'];
 
