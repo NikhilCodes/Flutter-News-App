@@ -1,46 +1,68 @@
 import 'dart:async';
+import 'dart:convert';
+import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:crypto/crypto.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:network_image_to_byte/network_image_to_byte.dart';
+import 'package:path_provider/path_provider.dart';
+
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class ArticlePage extends StatefulWidget {
-  ArticlePage({this.data});
+  ArticlePage({this.data, this.rawImageOverUrl});
 
-  final data;
+  final data, rawImageOverUrl;
 
   @override
   State<StatefulWidget> createState() {
-    return _ArticlePageState(data: data);
+    return _ArticlePageState(data: data, rawImageOverUrl: rawImageOverUrl);
   }
 }
 
 class _ArticlePageState extends State<ArticlePage>
     with SingleTickerProviderStateMixin {
-  _ArticlePageState({this.data});
+  _ArticlePageState({this.data, this.rawImageOverUrl});
 
-  final data;
+  final data, rawImageOverUrl;
+
   double lineLength = 0;
+  IconData makeOfflineIcon = Icons.file_download;
   AnimationController _controller;
+  SharedPreferences prefs;
 
   @override
   void initState() {
-    // TODO: implement initState
     super.initState();
     _controller = AnimationController(
       vsync: this,
       duration: Duration(milliseconds: 500),
       value: 1,
     );
-    WidgetsBinding.instance.addPostFrameCallback((timeStamp) => loopOnce(context));
+    WidgetsBinding.instance
+        .addPostFrameCallback((timeStamp) => loopOnceAtStart(context));
   }
 
-  Future<void> loopOnce(BuildContext context) async {
+  Future<void> loopOnceAtStart(BuildContext context) async {
+    prefs = await SharedPreferences.getInstance();
+    if (prefs.containsKey(generateMd5(data['title']))) {
+      setState(() {
+        makeOfflineIcon = Icons.offline_pin;
+      });
+    }
+
     await _controller.forward();
     await _controller.reverse();
     setState(() {
       lineLength = MediaQuery.of(context).size.width * 0.3;
     });
+  }
+
+  String generateMd5(String input) {
+    return md5.convert(utf8.encode(input)).toString();
   }
 
   @override
@@ -52,6 +74,7 @@ class _ArticlePageState extends State<ArticlePage>
   @override
   Widget build(BuildContext context) {
     String titleData, subTitleData, imageUrlData, bodyData;
+    Widget imageWidget;
     List<String> dateAndTimeData;
     titleData = data['title'];
     if (data['sub-title'] != null) {
@@ -60,17 +83,60 @@ class _ArticlePageState extends State<ArticlePage>
       subTitleData = "";
       // allow full body to appear.
     }
-    imageUrlData = data['image-url'];
+    imageUrlData = data['image-url'] ?? '';
     bodyData = data['body'];
     dateAndTimeData = <String>[
       data['date'],
       data['time'],
     ];
 
+
+    if (rawImageOverUrl == true) {
+      imageWidget = Image.memory(base64Decode(data["image-base64"]));
+    } else {
+      imageWidget = CachedNetworkImage(
+        imageUrl: imageUrlData,
+        placeholder: (context, url) => CircularProgressIndicator(),
+        errorWidget: (context, url, error) => Icon(
+          Icons.broken_image,
+          size: 40,
+        ),
+      );
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.black,
-        title: Text("Article"),
+        title: Text(
+          "ARTICLE",
+          style: TextStyle(letterSpacing: 3),
+        ),
+        actions: <Widget>[
+          Padding(
+            padding: EdgeInsets.only(right: 13),
+            child: GestureDetector(
+              child: Icon(makeOfflineIcon),
+              onTap: () async {
+//                if (prefs.containsKey(generateMd5(data['title'])))
+//                  return;
+
+                Uint8List base64imgData = await networkImageToByte(imageUrlData);
+                String base64string = base64Encode(base64imgData);
+                prefs.setStringList("${generateMd5(titleData)}", [
+                  titleData,
+                  subTitleData,
+                  bodyData,
+                  dateAndTimeData[0], // Date
+                  dateAndTimeData[1], // Time
+                  base64string
+                ]);
+                setState(() {
+                  makeOfflineIcon = Icons.offline_pin;
+                });
+              },
+            ),
+          )
+        ],
       ),
       body: ListView(
         children: <Widget>[
@@ -125,14 +191,7 @@ class _ArticlePageState extends State<ArticlePage>
           ),
           Padding(
             padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
-            child: CachedNetworkImage(
-              imageUrl: imageUrlData,
-              placeholder: (context, url) => LinearProgressIndicator(),
-              errorWidget: (context, url, error) => Icon(
-                Icons.broken_image,
-                size: 100,
-              ),
-            ),
+            child: imageWidget,
           ),
           Padding(
             padding: EdgeInsets.all(15),
@@ -152,9 +211,9 @@ class _ArticlePageState extends State<ArticlePage>
                 Container(
                   margin: EdgeInsets.all(10),
                   width: 40,
-                  height: 5,
+                  height: 2,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(1),
                     gradient: LinearGradient(
                       colors: [Colors.red.shade900, Colors.red.shade400],
                     ),
@@ -164,15 +223,15 @@ class _ArticlePageState extends State<ArticlePage>
                   "X",
                   style: TextStyle(
                     color: Colors.yellow.shade800,
-                    fontSize: 25,
+                    fontSize: 13,
                   ),
                 ),
                 Container(
                   margin: EdgeInsets.all(10),
                   width: 40,
-                  height: 5,
+                  height: 2,
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(3),
+                    borderRadius: BorderRadius.circular(1),
                     gradient: LinearGradient(
                       colors: [Colors.red.shade400, Colors.red.shade900],
                     ),

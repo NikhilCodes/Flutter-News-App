@@ -1,87 +1,89 @@
 import 'dart:async';
+import 'dart:convert';
 
-import 'package:crunchy_bytes/screens/offline_home.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'article.dart';
 
-class MyHomePage extends StatefulWidget {
+class MyOfflineHomePage extends StatefulWidget {
   @override
-  _MyHomePageState createState() => _MyHomePageState();
+  _MyOfflineHomePageState createState() => _MyOfflineHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
+class _MyOfflineHomePageState extends State<MyOfflineHomePage> {
+
+  var cachedData = List();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance
+        .addPostFrameCallback((timeStamp) => loopOnceAtStart(context));
+  }
+
+  Future<SharedPreferences> loopOnceAtStart(context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs;
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        // Here we take the value from the MyHomePage object that was created by
-        // the App.build method, and use it to set our appbar title.
-        title: Text(
-          "HOME",
-          style: TextStyle(
-            fontWeight: FontWeight.w600,
-            letterSpacing: 3,
-          ),
-        ),
-        actions: <Widget>[
-          Padding(
-            padding: EdgeInsets.only(right: 13),
-            child: PopupMenuButton(
-              child: Icon(Icons.more_vert),
-              itemBuilder: (context) => [
-                PopupMenuItem(
-                  child: GestureDetector(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      children: <Widget>[
-                        Icon(Icons.offline_bolt, color: Colors.black87,),
-                        Text("Saved Reads")
-                      ],
-                    ),
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (context) => MyOfflineHomePage())
-                      );
-                    },
-                  ),
+
+    return FutureBuilder(
+      future: loopOnceAtStart(context),
+      builder: (context, snapshot) {
+        if (snapshot.hasData) {
+          SharedPreferences prefs = snapshot.data;
+          prefs.getKeys().forEach((element) {
+            List<String> prefResolve = prefs.getStringList(element);
+            cachedData.add({
+              "title": prefResolve[0],
+              "sub-title": prefResolve[1],
+              "body": prefResolve[2],
+              "date": prefResolve[3],
+              "time": prefResolve[4],
+              "image-base64": prefResolve[5],
+            });
+          });
+          return Scaffold(
+            appBar: AppBar(
+              // Here we take the value from the MyHomePage object that was created by
+              // the App.build method, and use it to set our appbar title.
+              title: Text(
+                "SAVED",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 3,
                 ),
-              ],
+              ),
+              backgroundColor: Colors.black,
             ),
-          ),
-        ],
-        backgroundColor: Colors.black,
-      ),
-      body: Container(
-        child: StreamBuilder(
-          stream: Firestore.instance
-              .collection('news-articles')
-              .orderBy("timestamp", descending: true)
-              .snapshots(),
-          builder: (context, snapshot) {
-            switch (snapshot.connectionState) {
-              case ConnectionState.waiting:
-              case ConnectionState.none:
-                return LinearProgressIndicator();
-              default:
-                return ListView.separated(
-                  physics: BouncingScrollPhysics(),
-                  separatorBuilder: (context, index) => Divider(
-                    indent: 10,
-                    endIndent: 10,
-                    color: Colors.black26,
-                  ),
-                  itemCount: snapshot.data.documents.length,
-                  itemBuilder: (_, index) => NewsTile(
-                    data: snapshot.data.documents[index],
-                  ),
-                );
-            }
-          },
-        ),
-      ),
+            body: Container(
+              child: ListView.separated(
+                physics: BouncingScrollPhysics(),
+                separatorBuilder: (context, index) => Divider(
+                  indent: 10,
+                  endIndent: 10,
+                  color: Colors.black26,
+                ),
+                itemCount: cachedData.length,
+                itemBuilder: (_, index) => NewsTile(
+                  data: cachedData[index],
+                ),
+              ),
+            ),
+          );
+        } else {
+          return Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+      },
     );
   }
 }
@@ -94,7 +96,7 @@ class NewsTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Completer<Size> completer = Completer();
-    Image image = Image.network(data['image-url']);
+    Image image = Image.memory(base64Decode(data["image-base64"]));
     image.image.resolve(ImageConfiguration()).addListener(
       ImageStreamListener(
         (ImageInfo image, bool synchronousCall) {
@@ -128,7 +130,8 @@ class NewsTileSmall extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String titleData, subTitleData, imageUrlData, dateData;
+    String titleData, subTitleData, dateData;
+    Image imageData;
 
     titleData = data['title'];
     if ((data['sub-title'] != null) && (data['sub-title'] != '')) {
@@ -137,7 +140,7 @@ class NewsTileSmall extends StatelessWidget {
       subTitleData = data[
           'body']; // Overflow attribute will not allow full body to appear.
     }
-    imageUrlData = data['image-url'];
+    imageData = Image.memory(base64Decode(data["image-base64"]));
     dateData = data['date'];
 
     return FlatButton(
@@ -189,14 +192,7 @@ class NewsTileSmall extends StatelessWidget {
               width: MediaQuery.of(context).size.width * 0.2,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: imageUrlData,
-                  placeholder: (context, url) => CircularProgressIndicator(),
-                  errorWidget: (context, url, error) => Icon(
-                    Icons.broken_image,
-                    size: 40,
-                  ),
-                ),
+                child: imageData,
               ),
             )
           ],
@@ -206,7 +202,7 @@ class NewsTileSmall extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ArticlePage(data: data),
+            builder: (context) => ArticlePage(data: data, rawImageOverUrl: true),
           ),
         );
       },
@@ -221,7 +217,8 @@ class NewsTileLarge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    String titleData, subTitleData, imageUrlData, dateData;
+    String titleData, subTitleData, dateData;
+    Image imageData;
     TextOverflow overflowType;
     titleData = data['title'];
     if (data['sub-title'] != null && data['sub-title'] != '') {
@@ -233,7 +230,7 @@ class NewsTileLarge extends StatelessWidget {
       // Overflow attribute will not allow
       // full body to appear in subtitle.
     }
-    imageUrlData = data['image-url'];
+    imageData = Image.memory(base64Decode(data["image-base64"]));
     dateData = data['date'];
 
     return Container(
@@ -248,14 +245,7 @@ class NewsTileLarge extends StatelessWidget {
             children: <Widget>[
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: CachedNetworkImage(
-                  imageUrl: imageUrlData,
-                  placeholder: (context, url) => LinearProgressIndicator(),
-                  errorWidget: (context, url, error) => Icon(
-                    Icons.broken_image,
-                    size: 80,
-                  ),
-                ),
+                child: imageData
               ),
               Container(
                 padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
@@ -295,7 +285,7 @@ class NewsTileLarge extends StatelessWidget {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ArticlePage(data: data),
+                builder: (context) => ArticlePage(data: data, rawImageOverUrl: true),
               ),
             );
           },

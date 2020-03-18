@@ -19,6 +19,10 @@ environment:
 dependencies:
   firebase_auth:
   cloud_firestore:
+  path_provider:
+  crypto:
+  shared_preferences:
+  network_image_to_byte:
   cached_network_image:
   flutter:
     sdk: flutter
