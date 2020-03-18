@@ -9,7 +9,7 @@ A News/Blog template with sleek UI and Firebase as its backend.
  
 ## Designing Firestore Database yourself?
 ### Structure
-```json
+```
 news-articles <type: collection> {
     hsd283y8hh823 <type: document> {
         title: "Some Title 1",
