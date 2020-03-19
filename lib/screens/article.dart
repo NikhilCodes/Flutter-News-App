@@ -1,36 +1,36 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:crunchy_bytes/screens/offline_home.dart';
 import 'package:crypto/crypto.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:network_image_to_byte/network_image_to_byte.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ArticlePage extends StatefulWidget {
-  ArticlePage({this.data, this.rawImageOverUrl});
+  ArticlePage({this.data, this.offline});
 
-  final data, rawImageOverUrl;
+  final data, offline;
 
   @override
   State<StatefulWidget> createState() {
-    return _ArticlePageState(data: data, rawImageOverUrl: rawImageOverUrl);
+    return _ArticlePageState(data: data, offline: offline);
   }
 }
 
 class _ArticlePageState extends State<ArticlePage>
     with SingleTickerProviderStateMixin {
-  _ArticlePageState({this.data, this.rawImageOverUrl});
+  _ArticlePageState({this.data, this.offline});
 
-  final data, rawImageOverUrl;
+  final data, offline;
 
   double lineLength = 0;
-  IconData makeOfflineIcon = Icons.file_download;
+
+  Widget makeOfflineIcon = Icon(Icons.file_download);
   AnimationController _controller;
   SharedPreferences prefs;
 
@@ -48,9 +48,13 @@ class _ArticlePageState extends State<ArticlePage>
 
   Future<void> loopOnceAtStart(BuildContext context) async {
     prefs = await SharedPreferences.getInstance();
-    if (prefs.containsKey(generateMd5(data['title']))) {
+    if (offline == true) {
       setState(() {
-        makeOfflineIcon = Icons.offline_pin;
+        makeOfflineIcon = Icon(Icons.delete_outline);
+      });
+    } else if (prefs.containsKey(generateMd5(data['title']))) {
+      setState(() {
+        makeOfflineIcon = Icon(Icons.offline_pin);
       });
     }
 
@@ -90,9 +94,13 @@ class _ArticlePageState extends State<ArticlePage>
       data['time'],
     ];
 
-
-    if (rawImageOverUrl == true) {
-      imageWidget = Image.memory(base64Decode(data["image-base64"]));
+    if (offline == true) {
+      imageWidget = FadeInImage(
+        placeholder: Image.asset('images/comingsoon-square.png').image,
+        image: Image.memory(base64Decode(data["image-base64"])).image,
+        fadeInDuration: Duration(milliseconds: 100),
+        fadeInCurve: Curves.easeIn,
+      );
     } else {
       imageWidget = CachedNetworkImage(
         imageUrl: imageUrlData,
@@ -113,14 +121,38 @@ class _ArticlePageState extends State<ArticlePage>
         ),
         actions: <Widget>[
           Padding(
-            padding: EdgeInsets.only(right: 13),
+            padding: EdgeInsets.only(right: 20),
             child: GestureDetector(
-              child: Icon(makeOfflineIcon),
+              child: makeOfflineIcon,
               onTap: () async {
-//                if (prefs.containsKey(generateMd5(data['title'])))
-//                  return;
+                if (offline == true) {
+                  // REMOVAL BUTTON FUNCTION
+                  setState(() {
+                    prefs.remove(generateMd5(titleData));
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => MyOfflineHomePage(),
+                      ),
+                    );
+                  });
+                  return;
+                }
+                setState(() {
+                  makeOfflineIcon = AspectRatio(
+                    child: Padding(
+                      padding: EdgeInsets.all(16),
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation(Colors.white),
+                      ),
+                    ),
+                    aspectRatio: 1,
+                  );
+                });
+                if (prefs.containsKey(generateMd5(data['title']))) return;
 
-                Uint8List base64imgData = await networkImageToByte(imageUrlData);
+                Uint8List base64imgData =
+                    await networkImageToByte(imageUrlData);
                 String base64string = base64Encode(base64imgData);
                 prefs.setStringList("${generateMd5(titleData)}", [
                   titleData,
@@ -131,7 +163,7 @@ class _ArticlePageState extends State<ArticlePage>
                   base64string
                 ]);
                 setState(() {
-                  makeOfflineIcon = Icons.offline_pin;
+                  makeOfflineIcon = Icon(Icons.offline_pin);
                 });
               },
             ),

@@ -2,8 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'article.dart';
@@ -14,7 +12,6 @@ class MyOfflineHomePage extends StatefulWidget {
 }
 
 class _MyOfflineHomePageState extends State<MyOfflineHomePage> {
-
   var cachedData = List();
 
   @override
@@ -29,15 +26,24 @@ class _MyOfflineHomePageState extends State<MyOfflineHomePage> {
     return prefs;
   }
 
+  List reverse(Set<String> l) {
+    List rl = [];
+    List _l = l.toList();
+    for (int i = _l.length - 1; i >= 0; i--) {
+      rl.add(_l[i]);
+    }
+
+    return rl;
+  }
+
   @override
   Widget build(BuildContext context) {
-
     return FutureBuilder(
       future: loopOnceAtStart(context),
       builder: (context, snapshot) {
         if (snapshot.hasData) {
           SharedPreferences prefs = snapshot.data;
-          prefs.getKeys().forEach((element) {
+          reverse(prefs.getKeys()).forEach((element) {
             List<String> prefResolve = prefs.getStringList(element);
             cachedData.add({
               "title": prefResolve[0],
@@ -199,10 +205,10 @@ class NewsTileSmall extends StatelessWidget {
         ),
       ),
       onPressed: () {
-        Navigator.push(
+        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => ArticlePage(data: data, rawImageOverUrl: true),
+            builder: (context) => ArticlePage(data: data, offline: true),
           ),
         );
       },
@@ -244,9 +250,7 @@ class NewsTileLarge extends StatelessWidget {
           child: Column(
             children: <Widget>[
               ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: imageData
-              ),
+                  borderRadius: BorderRadius.circular(12), child: imageData),
               Container(
                 padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
                 child: Column(
@@ -282,10 +286,10 @@ class NewsTileLarge extends StatelessWidget {
             ],
           ),
           onPressed: () {
-            Navigator.push(
+            Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => ArticlePage(data: data, rawImageOverUrl: true),
+                builder: (context) => ArticlePage(data: data, offline: true),
               ),
             );
           },
