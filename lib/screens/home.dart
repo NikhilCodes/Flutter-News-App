@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:crunchy_bytes/screens/offline_home.dart';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -10,6 +12,10 @@ import 'article.dart';
 class MyHomePage extends StatefulWidget {
   @override
   _MyHomePageState createState() => _MyHomePageState();
+}
+
+String generateMd5(String input) {
+  return md5.convert(utf8.encode(input)).toString();
 }
 
 class _MyHomePageState extends State<MyHomePage> {
@@ -189,12 +195,15 @@ class NewsTileSmall extends StatelessWidget {
               width: MediaQuery.of(context).size.width * 0.2,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: CachedNetworkImage(
-                  imageUrl: imageUrlData,
-                  placeholder: (context, url) => CircularProgressIndicator(),
-                  errorWidget: (context, url, error) => Icon(
-                    Icons.broken_image,
-                    size: 40,
+                child: Hero(
+                  tag: generateMd5(titleData),
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrlData,
+                    placeholder: (context, url) => CircularProgressIndicator(),
+                    errorWidget: (context, url, error) => Icon(
+                      Icons.broken_image,
+                      size: 40,
+                    ),
                   ),
                 ),
               ),
@@ -248,12 +257,15 @@ class NewsTileLarge extends StatelessWidget {
             children: <Widget>[
               ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: CachedNetworkImage(
-                  imageUrl: imageUrlData,
-                  placeholder: (context, url) => LinearProgressIndicator(),
-                  errorWidget: (context, url, error) => Icon(
-                    Icons.broken_image,
-                    size: 80,
+                child: Hero(
+                  tag: generateMd5(titleData),
+                  child: CachedNetworkImage(
+                    imageUrl: imageUrlData,
+                    placeholder: (context, url) => LinearProgressIndicator(),
+                    errorWidget: (context, url, error) => Icon(
+                      Icons.broken_image,
+                      size: 80,
+                    ),
                   ),
                 ),
               ),

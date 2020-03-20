@@ -11,6 +11,8 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'home.dart';
+
 class ArticlePage extends StatefulWidget {
   ArticlePage({this.data, this.offline});
 
@@ -95,19 +97,25 @@ class _ArticlePageState extends State<ArticlePage>
     ];
 
     if (offline == true) {
-      imageWidget = FadeInImage(
-        placeholder: Image.asset('images/comingsoon-square.png').image,
-        image: Image.memory(base64Decode(data["image-base64"])).image,
-        fadeInDuration: Duration(milliseconds: 100),
-        fadeInCurve: Curves.easeIn,
+      imageWidget = Hero(
+        tag: generateMd5(titleData + "offline"),
+        child: FadeInImage(
+          placeholder: Image.asset('images/comingsoon-square.png').image,
+          image: Image.memory(base64Decode(data["image-base64"])).image,
+          fadeInDuration: Duration(milliseconds: 100),
+          fadeInCurve: Curves.easeIn,
+        ),
       );
     } else {
-      imageWidget = CachedNetworkImage(
-        imageUrl: imageUrlData,
-        placeholder: (context, url) => CircularProgressIndicator(),
-        errorWidget: (context, url, error) => Icon(
-          Icons.broken_image,
-          size: 40,
+      imageWidget = Hero(
+        tag: generateMd5(titleData),
+        child: CachedNetworkImage(
+          imageUrl: imageUrlData,
+          placeholder: (context, url) => CircularProgressIndicator(),
+          errorWidget: (context, url, error) => Icon(
+            Icons.broken_image,
+            size: 40,
+          ),
         ),
       );
     }
@@ -118,6 +126,24 @@ class _ArticlePageState extends State<ArticlePage>
         title: Text(
           "ARTICLE",
           style: TextStyle(letterSpacing: 3),
+        ),
+        leading: Padding(
+          padding: EdgeInsets.only(left: 20),
+          child: GestureDetector(
+            child: Icon(Icons.arrow_back_ios),
+            onTap: () {
+              if (offline == true) {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => MyOfflineHomePage(),
+                  ),
+                );
+              } else {
+                Navigator.of(context).pop();
+              }
+            },
+          ),
         ),
         actions: <Widget>[
           Padding(

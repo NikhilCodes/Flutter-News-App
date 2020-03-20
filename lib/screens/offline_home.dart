@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:crunchy_bytes/screens/home.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -198,7 +199,10 @@ class NewsTileSmall extends StatelessWidget {
               width: MediaQuery.of(context).size.width * 0.2,
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: imageData,
+                child: Hero(
+                  tag: generateMd5(titleData+"offline"),
+                  child: imageData,
+                ),
               ),
             )
           ],
@@ -250,7 +254,12 @@ class NewsTileLarge extends StatelessWidget {
           child: Column(
             children: <Widget>[
               ClipRRect(
-                  borderRadius: BorderRadius.circular(12), child: imageData),
+                borderRadius: BorderRadius.circular(12),
+                child: Hero(
+                  tag: generateMd5(titleData+"offline"),
+                  child: imageData,
+                ),
+              ),
               Container(
                 padding: EdgeInsets.fromLTRB(0, 10, 0, 10),
                 child: Column(
@@ -286,7 +295,7 @@ class NewsTileLarge extends StatelessWidget {
             ],
           ),
           onPressed: () {
-            Navigator.pushReplacement(
+            Navigator.pushReplacement(  // Using pushReplacement instead of push to rebuild this page when pressing back-button in-case user attempts saved item delete.
               context,
               MaterialPageRoute(
                 builder: (context) => ArticlePage(data: data, offline: true),
