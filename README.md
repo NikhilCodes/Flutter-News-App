@@ -1,4 +1,4 @@
-# College News/Blog Template
+# News/Blog App
 A News/Blog template with sleek UI and Firebase as its backend.
 
 ## Features
